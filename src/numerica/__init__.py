@@ -1,3 +1,5 @@
 """Numerica: numerical methods for applied mathematics."""
 
-__all__: list[str] = []
+from numerica.root import bisection
+
+__all__: list[str] = ["bisection"]
