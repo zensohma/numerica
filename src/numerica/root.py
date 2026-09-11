@@ -122,3 +122,119 @@ def bisection(
         f"bisection did not converge to tolerance {tol} within "
         f"{max_iter} iterations (max_iter)."
     )
+
+
+def newton_raphson(
+    f: Callable[[float], float],
+    df: Callable[[float], float],
+    x0: float,
+    tol: float = 1e-6,
+    max_iter: int = 100,
+) -> float:
+    """Find a root of ``f`` using the Newton-Raphson method.
+
+    Given a differentiable function ``f`` and its derivative ``df``,
+    the Newton-Raphson method iterates
+
+        x_{n+1} = x_n - f(x_n) / df(x_n)
+
+    starting from an initial guess ``x0``. Each step follows the
+    tangent line of ``f`` at ``x_n`` to its intersection with the
+    x-axis. Near a simple root the method converges quadratically,
+    but convergence is not guaranteed for arbitrary initial guesses.
+
+    Parameters
+    ----------
+    f : Callable[[float], float]
+        A differentiable function whose root is sought. It must be
+        defined (and not return NaN) at every point sampled by the
+        algorithm.
+    df : Callable[[float], float]
+        The derivative of ``f``. It must be defined (and not return
+        NaN, inf, or zero) at every point sampled by the algorithm.
+    x0 : float
+        Initial guess for the root.
+    tol : float, optional
+        Desired stopping tolerance on the difference between successive
+        iterates. Convergence is declared once
+        ``abs(x_next - x) <= tol``. Must be positive. Default is
+        ``1e-6``.
+    max_iter : int, optional
+        Maximum number of Newton iterations to perform. Must be at
+        least 1. ``RuntimeError`` is raised if the stopping criterion is
+        not reached within this many iterations. Default is ``100``.
+
+    Returns
+    -------
+    float
+        An approximation to a root of ``f``. The returned value is a
+        plain Python ``float``.
+
+    Raises
+    ------
+    ValueError
+        If ``tol <= 0``.
+        If ``max_iter < 1``.
+        If ``df(x)`` is zero at any iterate, so that the iteration
+        would divide by zero.
+        If ``f`` or ``df`` returns NaN at any sampled point.
+    RuntimeError
+        If ``max_iter`` is reached without satisfying the stopping
+        criterion.
+
+    Notes
+    -----
+    The stopping criterion is based on successive iterates: iteration
+    stops once ``abs(x_next - x) <= tol``. If ``f(x) == 0`` exactly at
+    any visited point, that point is returned immediately. The
+    derivative is evaluated and checked for zero before division.
+
+    Examples
+    --------
+    >>> from numerica import newton_raphson
+    >>> root = newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5)
+    >>> abs(root - 2**0.5) < 1e-6
+    True
+    """
+    if tol <= 0:
+        raise ValueError("tol must be positive.")
+    if max_iter < 1:
+        raise ValueError("max_iter must be at least 1.")
+
+    x = float(x0)
+    fx = float(f(x))
+
+    if math.isnan(fx):
+        raise ValueError("f returned NaN at the initial guess.")
+
+    if fx == 0:
+        return x
+
+    for _ in range(max_iter):
+        dfx = float(df(x))
+
+        if math.isnan(dfx):
+            raise ValueError("df returned NaN; cannot continue iteration.")
+
+        if dfx == 0:
+            raise ValueError("df(x) is zero; Newton's method cannot divide by zero.")
+
+        x_next = x - fx / dfx
+        fx_next = float(f(x_next))
+
+        if math.isnan(fx_next):
+            raise ValueError("f returned NaN; cannot continue iteration.")
+
+        if fx_next == 0:
+            return float(x_next)
+
+        if abs(x_next - x) <= tol:
+            return float(x_next)
+
+        x = x_next
+        fx = fx_next
+
+    raise RuntimeError(
+        f"newton_raphson did not converge to tolerance {tol} within "
+        f"{max_iter} iterations (max_iter)."
+    )

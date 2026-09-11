@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from numerica import bisection
+from numerica import bisection, newton_raphson
 
 
 def test_math_correctness() -> None:
@@ -54,6 +54,7 @@ def test_max_iter_too_small_does_not_converge() -> None:
     assert "max_iter" in str(exc.value)
 
 
+
 def test_function_returns_nan() -> None:
     def f(x: float) -> float:
         return math.nan
@@ -65,6 +66,8 @@ def test_function_returns_nan() -> None:
 def test_numpy_scalar_function_output() -> None:
     def f(x: float) -> float:
         return np.float64(x**2 - 2)
+
+    assert type(f(0)) is np.float64
 
     root = bisection(f, 0, 2)
     assert isinstance(root, float)
@@ -79,3 +82,77 @@ def test_returns_plain_python_float() -> None:
 def test_numerical_accuracy() -> None:
     root = bisection(lambda x: x**2 - 2, 0, 2, tol=1e-9, max_iter=200)
     assert abs(root - math.sqrt(2)) <= 1e-9
+
+
+def test_newton_math_correctness() -> None:
+    root = newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5)
+    assert abs(root - math.sqrt(2)) <= 1e-6
+
+
+def test_newton_exact_root_at_initial_guess() -> None:
+    assert newton_raphson(lambda x: x, lambda x: 1, 0) == 0
+
+
+def test_newton_nonpositive_tolerance() -> None:
+    with pytest.raises(ValueError):
+        newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5, tol=0)
+    with pytest.raises(ValueError):
+        newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5, tol=-1)
+
+
+def test_newton_zero_max_iter() -> None:
+    with pytest.raises(ValueError):
+        newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5, max_iter=0)
+
+
+def test_newton_zero_derivative() -> None:
+    with pytest.raises(ValueError):
+        newton_raphson(lambda x: x**2 + 1, lambda x: 2 * x, 0)
+
+
+def test_newton_function_returns_nan() -> None:
+    def f(x: float) -> float:
+        return math.nan
+
+    with pytest.raises(ValueError):
+        newton_raphson(f, lambda x: 1.0, 0)
+
+
+def test_newton_derivative_returns_nan() -> None:
+    def df(x: float) -> float:
+        return math.nan
+
+    with pytest.raises(ValueError):
+        newton_raphson(lambda x: x**2 - 2, df, 1.5)
+
+
+def test_newton_numpy_scalar_function_output() -> None:
+    def f(x: float) -> float:
+        return np.float64(x**2 - 2)
+
+    def df(x: float) -> float:
+        return np.float64(2 * x)
+
+    assert type(df(0)) is np.float64
+
+    root = newton_raphson(f, df, 1.5)
+    assert isinstance(root, float)
+    assert abs(root - math.sqrt(2)) <= 1e-6
+
+
+def test_newton_max_iter_too_small_does_not_converge() -> None:
+    with pytest.raises(RuntimeError) as exc:
+        newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5, tol=1e-12, max_iter=1)
+    assert "max_iter" in str(exc.value)
+
+
+def test_newton_returns_plain_python_float() -> None:
+    root = newton_raphson(lambda x: x**2 - 2, lambda x: 2 * x, 1.5)
+    assert type(root) is float
+
+
+def test_newton_numerical_accuracy() -> None:
+    root = newton_raphson(
+        lambda x: x**2 - 2, lambda x: 2 * x, 1.5, tol=1e-10, max_iter=50
+    )
+    assert abs(root - math.sqrt(2)) <= 1e-10
