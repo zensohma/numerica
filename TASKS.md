@@ -419,7 +419,7 @@ Tests should include:
 
 ## TASK-008: Review Trapezoidal Implementation
 
-Status: DONE
+Status: TODO
 
 ### Review Scope
 
@@ -611,6 +611,354 @@ Review:
 - No unrelated functionality introduced
 
 ---
+
+---
+
+# Phase 3 - Ordinary Differential Equations
+
+## TASK-011: Implement Euler Method
+
+Status: TODO
+
+### Public API
+
+```python
+euler(
+    f,
+    t0,
+    y0,
+    h,
+    n,
+)
+```
+
+### Mathematical Definition
+
+For the initial value problem
+
+```text
+y'(t) = f(t, y)
+y(t0) = y0
+```
+
+Euler's method uses
+
+```text
+t_(k+1) = t_k + h
+y_(k+1) = y_k + h * f(t_k, y_k)
+```
+
+for
+
+```text
+k = 0, 1, ..., n-1
+```
+
+### Requirements
+
+- Implement in `src/numerica/ode.py`
+- Export from `src/numerica/__init__.py`
+- Use modern Python type hints
+- Use `Callable` from `collections.abc`
+- Add NumPy-style docstring
+- Support scalar first-order ODEs only
+- Validate `h`
+- Reject `h == 0`
+- Support positive step size
+- Support negative step size
+- Validate `n`
+- Require `n` to be an integer
+- Require `n >= 1`
+- Preserve the initial condition
+- Evaluate `f(t, y)` once per iteration
+- Detect NaN derivative values
+- Support NumPy scalar outputs from `f`
+- Return two sequences: `t_values` and `y_values`
+- Include the initial condition in the output
+- Return exactly `n + 1` points
+- Add unit tests
+- Add edge-case tests
+- Do not implement systems of ODEs yet
+- Do not add adaptive step sizing
+- Do not implement RK4 yet
+- Do not modify existing numerical methods
+
+### Return Design
+
+For `n` steps:
+
+```text
+len(t_values) == n + 1
+len(y_values) == n + 1
+```
+
+The initial entries must satisfy:
+
+```text
+t_values[0] == t0
+y_values[0] == y0
+```
+
+Euler and RK4 must use the same return structure.
+
+### Test Coverage
+
+Tests should include:
+
+- `y' = y`, `y(0) = 1`
+- constant derivative
+- zero derivative
+- initial values preserved
+- correct number of output points
+- known manually computed Euler steps
+- positive `h`
+- negative `h`
+- `h == 0`
+- `n == 0`
+- negative `n`
+- non-integer `n`
+- NaN derivative output
+- NumPy scalar derivative output
+- numerical approximation against analytical solution
+
+### Acceptance Criteria
+
+- Euler recurrence is mathematically correct
+- Time grid is correct
+- Initial condition is preserved
+- Output contains exactly `n + 1` points
+- Positive and negative step sizes behave correctly
+- Input validation is complete
+- NaN handling is correct
+- NumPy scalar compatibility is verified
+- Tests pass
+- Ruff passes
+- MyPy passes
+- Public API is documented
+- Existing numerical methods remain unchanged
+- No unnecessary dependencies introduced
+- No unrelated changes introduced
+
+---
+
+## TASK-012: Review Euler Method
+
+Status: TODO
+
+### Review Scope
+
+Review:
+
+- mathematical Euler recurrence
+- time-step calculation
+- initial condition handling
+- iteration indexing
+- number of returned points
+- output API
+- positive step behavior
+- negative step behavior
+- scalar ODE assumptions
+- NaN handling
+- NumPy scalar compatibility
+- API consistency
+- error messages
+- floating-point behavior
+- test coverage
+- code readability
+
+### Acceptance Criteria
+
+- Mathematical implementation verified
+- Euler recurrence verified
+- Time stepping verified
+- Initial condition behavior verified
+- Output shape verified
+- Positive and negative step behavior verified
+- Edge cases covered
+- NumPy scalar compatibility verified
+- Existing tests remain passing
+- `pytest` passes
+- `ruff check .` passes
+- `mypy src` passes
+- No unrelated functionality introduced
+
+---
+
+## TASK-013: Implement Runge-Kutta 4 Method
+
+Status: TODO
+
+### Public API
+
+```python
+rk4(
+    f,
+    t0,
+    y0,
+    h,
+    n,
+)
+```
+
+### Mathematical Definition
+
+For
+
+```text
+y'(t) = f(t, y)
+```
+
+compute
+
+```text
+k1 = f(t, y)
+
+k2 = f(
+    t + h/2,
+    y + h*k1/2,
+)
+
+k3 = f(
+    t + h/2,
+    y + h*k2/2,
+)
+
+k4 = f(
+    t + h,
+    y + h*k3,
+)
+```
+
+then
+
+```text
+y_next = y + h/6 * (
+    k1
+    + 2*k2
+    + 2*k3
+    + k4
+)
+
+t_next = t + h
+```
+
+### Requirements
+
+- Implement in `src/numerica/ode.py`
+- Export from `src/numerica/__init__.py`
+- Use modern Python type hints
+- Use `Callable` from `collections.abc`
+- Add NumPy-style docstring
+- Support scalar first-order ODEs only
+- Validate `h`
+- Reject `h == 0`
+- Support positive step size
+- Support negative step size
+- Validate `n`
+- Require `n` to be an integer
+- Require `n >= 1`
+- Implement all four RK4 stages correctly
+- Evaluate stages at the correct time and state locations
+- Detect NaN derivative values at any stage
+- Support NumPy scalar derivative outputs
+- Return the same output structure as Euler
+- Preserve the initial condition
+- Return exactly `n + 1` points
+- Add unit tests
+- Add edge-case tests
+- Do not add adaptive Runge-Kutta methods
+- Do not add systems of ODEs yet
+- Do not modify Euler or existing numerical methods
+
+### Test Coverage
+
+Tests should include:
+
+- `y' = y`, `y(0) = 1`
+- constant derivative
+- zero derivative
+- initial condition preservation
+- correct number of points
+- positive step size
+- negative step size
+- `h == 0`
+- `n == 0`
+- negative `n`
+- non-integer `n`
+- NaN derivative at RK stages
+- NumPy scalar derivative output
+- manually verified single RK4 step
+- numerical accuracy against analytical solution
+- RK4 accuracy compared with Euler for the same step size
+
+### Acceptance Criteria
+
+- RK4 stages are mathematically correct
+- Stage time locations are correct
+- Stage state values are correct
+- RK4 `1, 2, 2, 1` weighting is correct
+- Time stepping is correct
+- Initial condition is preserved
+- Output contains exactly `n + 1` points
+- Positive and negative step sizes behave correctly
+- Input validation is complete
+- NaN handling is correct
+- NumPy scalar compatibility is verified
+- Tests pass
+- Ruff passes
+- MyPy passes
+- Public API is documented
+- Existing numerical methods remain unchanged
+- No unnecessary dependencies introduced
+- No unrelated changes introduced
+
+---
+
+## TASK-014: Review Runge-Kutta 4 Method
+
+Status: TODO
+
+### Review Scope
+
+Review:
+
+- mathematical RK4 formula
+- `k1`
+- `k2`
+- `k3`
+- `k4`
+- stage time locations
+- stage state values
+- final `1, 2, 2, 1` weighting
+- time stepping
+- initial condition handling
+- number of returned points
+- output API consistency with Euler
+- positive step behavior
+- negative step behavior
+- NaN handling
+- NumPy scalar compatibility
+- API consistency
+- numerical accuracy
+- test coverage
+- code readability
+
+### Acceptance Criteria
+
+- All RK4 stages verified
+- Stage locations verified
+- RK4 weights verified
+- Numerical accuracy reviewed
+- Initial condition behavior verified
+- Output shape verified
+- Positive and negative step behavior verified
+- Edge cases covered
+- NumPy scalar compatibility verified
+- Existing tests remain passing
+- `pytest` passes
+- `ruff check .` passes
+- `mypy src` passes
+- No unrelated functionality introduced
 
 # Development Rules
 
